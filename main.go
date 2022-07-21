@@ -63,10 +63,39 @@ func auth(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func main() {
+func noauth(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(200)
+	w.Write([]byte("Success"))
+}
 
+func main() {
+	port, ok := os.LookupEnv("PORT")
+	if !ok {
+		log.Println("Port not defined.  Defaulting to 8000")
+		port = ":8000"
+	} else {
+		port = ":" + port
+	}
+
+	serverType, ok := os.LookupEnv("SERVER_TYPE")
+	if !ok {
+		log.Println("SERVER_TYPE not defined.  Defaulting to generic")
+		serverType = "GENERIC"
+	} else {
+		if serverType == "AUTH" {
+			log.Println("SERVER_TYPE is AUTH")
+		} else {
+			serverType = "GENERIC"
+		}
+
+	}
 	http.HandleFunc("/status", status)
-	http.HandleFunc("/", auth)
-	log.Println("Starting server on port: 9091")
-	http.ListenAndServe(":9091", nil)
+	if serverType == "AUTH" {
+		http.HandleFunc("/", auth)
+	} else {
+		http.HandleFunc("/", noauth)
+	}
+
+	log.Println("Starting server on port" + port)
+	http.ListenAndServe(port, nil)
 }

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: generic-server-1
+  namespace: default
+  labels:
+    app: generic-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: generic-server
+  template:
+    metadata:
+      labels:
+        app: generic-server
+    spec:
+      containers:
+      - name: generic-server
+        image: docker.io/pszeto/generic-server
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
