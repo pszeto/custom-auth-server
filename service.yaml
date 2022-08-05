@@ -1,12 +1,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: generic-server
+  name: generic-server-2
   namespace: default
 spec:
   selector:
-    app: generic-server
+    app: generic-server-2
   ports:
   - protocol: TCP
-    port: 8000
-    targetPort: 8000
+    port: 9000
+    targetPort: 9000
