@@ -43,28 +43,34 @@ func auth(w http.ResponseWriter, req *http.Request) {
 
 	headers := req.Header
 	incomingApiKey, ok := headers["X-Api-Key"]
+	hostname, _ := os.Hostname()
+	w.Header().Add("x-auth-server", hostname)
 	if ok {
 		log.Printf("x-api-key %s\n", incomingApiKey)
 		if incomingApiKey[0] == apiKey {
-			log.Printf("[200] %s %s \n", req.Host, req.URL.Path)
+			log.Printf("%s [200] %s %s \n", hostname, req.Host, req.URL.Path)
 			w.WriteHeader(200)
 			w.Write([]byte("Success"))
 		} else {
-			log.Printf("[401] %s %s Reason: Failed Authorization - keys don't match. API_KEY: %s x-api-key %s \n", req.Host, req.URL.Path, apiKey, incomingApiKey[0])
+			log.Printf("%s [401] %s %s Reason: Failed Authorization - keys don't match. API_KEY: %s x-api-key %s \n", hostname, req.Host, req.URL.Path, apiKey, incomingApiKey[0])
 			w.WriteHeader(401)
 			w.Write([]byte("Not authorized"))
 		}
 	} else {
-		log.Printf("[401] %s %s Reason: Failed Authorization - x-api-key header is not present\n", req.Host, req.URL.Path)
+		log.Printf("%s [401] %s %s Reason: Failed Authorization - x-api-key header is not present\n", hostname, req.Host, req.URL.Path)
 		w.WriteHeader(401)
 		w.Write([]byte("Not authorized"))
 	}
 }
 
 func noauth(w http.ResponseWriter, req *http.Request) {
-	log.Printf("[200] %s %s \n", req.Host, req.URL.Path)
-	w.WriteHeader(200)
-	w.Write([]byte("Success"))
+	hostname, _ := os.Hostname()
+	log.Printf("%s [200] %s %s headers(%s)\n", hostname, req.Host, req.URL.Path, req.Header)
+	w.Header().Add("x-auth-server", hostname)
+	resp := make(map[string]string)
+	resp["message"] = "success"
+	jsonResp, _ := json.Marshal(resp)
+	w.Write(jsonResp)
 }
 
 func main() {
@@ -96,5 +102,6 @@ func main() {
 	}
 
 	log.Println("Starting server on port" + port)
+	log.Println("Version 1.13")
 	http.ListenAndServe(port, nil)
 }
