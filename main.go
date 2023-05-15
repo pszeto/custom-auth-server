@@ -71,6 +71,7 @@ func noauth(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("x-auth-server", hostname)
 	id := uuid.New()
 	w.Header().Add("etag", id.String())
+	w.Header().Add("x-e-tag", id.String())
 	resp := make(map[string]string)
 	resp["message"] = "success"
 	jsonResp, _ := json.Marshal(resp)
