@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: generic-server-2
+  name: generic-server
   namespace: default
   labels:
-    app: generic-server-2
+    app: generic-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: generic-server-2
+      app: generic-server
   template:
     metadata:
       labels:
-        app: generic-server-2
+        app: generic-server
     spec:
       containers:
       - name: generic-server
@@ -22,5 +22,7 @@ spec:
         env:
         - name: PORT
           value: "9000"
+        - name: SERVER_TYPE
+          value: GENERIC         
         ports:
         - containerPort: 9000
