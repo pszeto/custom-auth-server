@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var startTime time.Time
@@ -67,6 +69,8 @@ func noauth(w http.ResponseWriter, req *http.Request) {
 	hostname, _ := os.Hostname()
 	log.Printf("%s [200] %s %s headers(%s)\n", hostname, req.Host, req.URL.Path, req.Header)
 	w.Header().Add("x-auth-server", hostname)
+	id := uuid.New()
+	w.Header().Add("etag", id)
 	resp := make(map[string]string)
 	resp["message"] = "success"
 	jsonResp, _ := json.Marshal(resp)
