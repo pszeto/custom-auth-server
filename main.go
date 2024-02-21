@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,6 +36,9 @@ func status(w http.ResponseWriter, req *http.Request) {
 }
 
 func auth(w http.ResponseWriter, req *http.Request) {
+	hostname, _ := os.Hostname()
+	log.Printf("Handling %s request : %s %s %s %s headers(%s)\n", req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+
 	apiKey, ok := os.LookupEnv("API_KEY")
 	w.Header().Set("X-Server", "custom-auth-server")
 	if !ok {
@@ -45,7 +50,7 @@ func auth(w http.ResponseWriter, req *http.Request) {
 
 	headers := req.Header
 	incomingApiKey, ok := headers["X-Api-Key"]
-	hostname, _ := os.Hostname()
+
 	w.Header().Add("x-auth-server", hostname)
 	if ok {
 		log.Printf("x-api-key %s\n", incomingApiKey)
@@ -67,11 +72,35 @@ func auth(w http.ResponseWriter, req *http.Request) {
 
 func noauth(w http.ResponseWriter, req *http.Request) {
 	hostname, _ := os.Hostname()
-	log.Printf("%s [200] %s %s headers(%s)\n", hostname, req.Host, req.URL.Path, req.Header)
+	log.Printf("Handling %s request : %s %s %s %s headers(%s)\n", req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 	w.Header().Add("x-auth-server", hostname)
 	id := uuid.New()
 	w.Header().Add("etag", id.String())
 	w.Header().Add("x-e-tag", id.String())
+	w.Header().Add("content-type", "application/json")
+	w.Header().Add("transfer-encoding", "chunked")
+
+	resp := make(map[string]string)
+	resp["message"] = "success"
+	jsonResp, _ := json.Marshal(resp)
+	w.Write(jsonResp)
+}
+
+func delay(w http.ResponseWriter, req *http.Request) {
+	hostname, _ := os.Hostname()
+	log.Printf("Handling %s request : %s %s %s %s headers(%s)\n", req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+	w.Header().Add("x-auth-server", hostname)
+	w.Header().Add("content-type", "application/json")
+	path := req.URL.Path
+	pathSplit := strings.Split(path, "/")
+	delay := pathSplit[2]
+	delayAmount, err := strconv.Atoi(delay)
+	if err != nil {
+		delayAmount = 1
+
+	}
+	log.Printf("Delaying response %s seconds.", delay)
+	time.Sleep(time.Duration(delayAmount) * time.Second)
 	resp := make(map[string]string)
 	resp["message"] = "success"
 	jsonResp, _ := json.Marshal(resp)
@@ -100,13 +129,24 @@ func main() {
 
 	}
 	http.HandleFunc("/status", status)
+
 	if serverType == "AUTH" {
 		http.HandleFunc("/", auth)
 	} else {
 		http.HandleFunc("/", noauth)
 	}
+	http.HandleFunc("/delay/1", delay)
+	http.HandleFunc("/delay/2", delay)
+	http.HandleFunc("/delay/3", delay)
+	http.HandleFunc("/delay/4", delay)
+	http.HandleFunc("/delay/5", delay)
+	http.HandleFunc("/delay/6", delay)
+	http.HandleFunc("/delay/7", delay)
+	http.HandleFunc("/delay/8", delay)
+	http.HandleFunc("/delay/9", delay)
+	http.HandleFunc("/delay/10", delay)
 
 	log.Println("Starting server on port" + port)
-	log.Println("Version 1.13")
+	log.Println("Version 1.14")
 	http.ListenAndServe(port, nil)
 }
