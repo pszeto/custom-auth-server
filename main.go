@@ -36,16 +36,17 @@ func status(w http.ResponseWriter, req *http.Request) {
 }
 
 func auth(w http.ResponseWriter, req *http.Request) {
+	logId := uuid.New()
 	hostname, _ := os.Hostname()
-	log.Printf("Handling %s request : %s %s %s %s headers(%s)\n", req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+	log.Printf("[%s] Handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 
 	apiKey, ok := os.LookupEnv("API_KEY")
 	w.Header().Set("X-Server", "custom-auth-server")
 	if !ok {
-		log.Println("API_KEY is not present. Setting to default : 828c3c5f-30ab-4291-8ad1-7cc33ba0be4f")
+		log.Println("[%s] API_KEY is not present. Setting to default : 828c3c5f-30ab-4291-8ad1-7cc33ba0be4f", logId)
 		apiKey = "828c3c5f-30ab-4291-8ad1-7cc33ba0be4f"
 	} else {
-		log.Printf("API_KEY: %s\n", apiKey)
+		log.Printf("[%s] API_KEY: %s\n", logId, apiKey)
 	}
 
 	headers := req.Header
@@ -53,18 +54,21 @@ func auth(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Add("x-auth-server", hostname)
 	if ok {
-		log.Printf("x-api-key %s\n", incomingApiKey)
+		log.Printf("[%s] x-api-key %s\n", logId, incomingApiKey)
 		if incomingApiKey[0] == apiKey {
-			log.Printf("%s [200] %s %s \n", hostname, req.Host, req.URL.Path)
+			log.Printf("[%s] - %s [200] %s %s \n", logId, hostname, req.Host, req.URL.Path)
+			log.Printf("[%s] Completed handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 			w.WriteHeader(200)
 			w.Write([]byte("Success"))
 		} else {
-			log.Printf("%s [401] %s %s Reason: Failed Authorization - keys don't match. API_KEY: %s x-api-key %s \n", hostname, req.Host, req.URL.Path, apiKey, incomingApiKey[0])
+			log.Printf("[%s], %s [401] %s %s Reason: Failed Authorization - keys don't match. API_KEY: %s x-api-key %s \n", logId, hostname, req.Host, req.URL.Path, apiKey, incomingApiKey[0])
+			log.Printf("[%s] Completed handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 			w.WriteHeader(401)
 			w.Write([]byte("Not authorized"))
 		}
 	} else {
-		log.Printf("%s [401] %s %s Reason: Failed Authorization - x-api-key header is not present\n", hostname, req.Host, req.URL.Path)
+		log.Printf("[%s] %s [401] %s %s Reason: Failed Authorization - x-api-key header is not present\n", logId, hostname, req.Host, req.URL.Path)
+		log.Printf("[%s] Completed handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 		w.WriteHeader(401)
 		w.Write([]byte("Not authorized"))
 	}
@@ -72,7 +76,8 @@ func auth(w http.ResponseWriter, req *http.Request) {
 
 func noauth(w http.ResponseWriter, req *http.Request) {
 	hostname, _ := os.Hostname()
-	log.Printf("Handling %s request : %s %s %s %s headers(%s)\n", req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+	logId := uuid.New()
+	log.Printf("[%s] Handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 	w.Header().Add("x-auth-server", hostname)
 	id := uuid.New()
 	w.Header().Add("etag", id.String())
@@ -83,37 +88,77 @@ func noauth(w http.ResponseWriter, req *http.Request) {
 	resp := make(map[string]string)
 	resp["message"] = "success"
 	jsonResp, _ := json.Marshal(resp)
+	log.Printf("[%s] Completed handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 	w.Write(jsonResp)
 }
 
 func delay(w http.ResponseWriter, req *http.Request) {
+	logId := uuid.New()
 	hostname, _ := os.Hostname()
-	log.Printf("Handling %s request : %s %s %s %s headers(%s)\n", req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+	log.Printf("[%s] Handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 	w.Header().Add("x-auth-server", hostname)
 	w.Header().Add("content-type", "application/json")
 	path := req.URL.Path
+	log.Printf("[%s] Path %s value in url\n", logId, path)
 	pathSplit := strings.Split(path, "/")
+	log.Printf("[%s] pathSplit %s value in url\n", logId, pathSplit)
 	delay := pathSplit[2]
+	log.Printf("[%s] Delay %s value in url\n", logId, delay)
 	delayAmount, err := strconv.Atoi(delay)
 	if err != nil {
 		delayAmount = 1
 
 	}
-	log.Printf("Delaying response %s seconds.", delay)
+	log.Printf("[%s] Delaying response %s seconds.", logId, delay)
 	time.Sleep(time.Duration(delayAmount) * time.Second)
+	log.Printf("[%s] Finished Delaying response %s seconds.", logId, delay)
 	resp := make(map[string]string)
 	resp["message"] = "success"
 	jsonResp, _ := json.Marshal(resp)
+	log.Printf("[%s] Completed handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 	w.Write(jsonResp)
 }
 
+func Run(addr string, sslAddr string, ssl map[string]string) chan error {
+
+	errs := make(chan error)
+
+	// Starting HTTP server
+	go func() {
+		log.Printf("Staring HTTP service on %s", addr)
+
+		if err := http.ListenAndServe(addr, nil); err != nil {
+			errs <- err
+		}
+
+	}()
+
+	// Starting HTTPS server
+	go func() {
+		log.Printf("Staring HTTPS service on %s", sslAddr)
+		if err := http.ListenAndServeTLS(sslAddr, ssl["cert"], ssl["key"], nil); err != nil {
+			errs <- err
+		}
+	}()
+
+	return errs
+}
+
 func main() {
-	port, ok := os.LookupEnv("PORT")
+	httpPort, ok := os.LookupEnv("HTTP_PORT")
 	if !ok {
-		log.Println("Port not defined.  Defaulting to 8000")
-		port = ":8000"
+		log.Println("HTTP_PORT not defined.  Defaulting to 8080")
+		httpPort = ":8080"
 	} else {
-		port = ":" + port
+		httpPort = ":" + httpPort
+	}
+
+	httpsPort, ok := os.LookupEnv("HTTPS_PORT")
+	if !ok {
+		log.Println("HTTPS_PORT not defined.  Defaulting to 8443")
+		httpsPort = ":8443"
+	} else {
+		httpsPort = ":" + httpsPort
 	}
 
 	serverType, ok := os.LookupEnv("SERVER_TYPE")
@@ -128,25 +173,26 @@ func main() {
 		}
 
 	}
-	http.HandleFunc("/status", status)
 
+	http.HandleFunc("/status", status)
 	if serverType == "AUTH" {
 		http.HandleFunc("/", auth)
 	} else {
 		http.HandleFunc("/", noauth)
 	}
-	http.HandleFunc("/delay/1", delay)
-	http.HandleFunc("/delay/2", delay)
-	http.HandleFunc("/delay/3", delay)
-	http.HandleFunc("/delay/4", delay)
-	http.HandleFunc("/delay/5", delay)
-	http.HandleFunc("/delay/6", delay)
-	http.HandleFunc("/delay/7", delay)
-	http.HandleFunc("/delay/8", delay)
-	http.HandleFunc("/delay/9", delay)
-	http.HandleFunc("/delay/10", delay)
 
-	log.Println("Starting server on port" + port)
-	log.Println("Version 1.14")
-	http.ListenAndServe(port, nil)
+	http.HandleFunc("/delay/", delay)
+
+	log.Println("Version 1.15")
+
+	errs := Run(httpPort, httpsPort, map[string]string{
+		"cert": "server.crt",
+		"key":  "server.key",
+	})
+
+	// This will run forever until channel receives error
+	select {
+	case err := <-errs:
+		log.Printf("Could not start serving service due to (error: %s)", err)
+	}
 }
