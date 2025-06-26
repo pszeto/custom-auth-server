@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: generic-server
-        image: docker.io/pszeto/generic-server
+        image: docker.io/pszeto/generic-server:1.15
         imagePullPolicy: Always
         env:
         - name: HTTP_PORT

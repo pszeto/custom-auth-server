@@ -40,18 +40,18 @@ func auth(w http.ResponseWriter, req *http.Request) {
 	hostname, _ := os.Hostname()
 	log.Printf("[%s] Handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 	headers := req.Header
-	log.Println("[%s] Request Headers:", logId)
+	log.Printf("[%s] Request Headers:\n", logId)
 	for name, values := range headers {
 		for _, value := range values {
 			log.Printf("[%s] %s: %s\n", logId, name, value)
 		}
 	}
 	
-	log.Println("[%s] Request Headers End", logId)
+	log.Printf("[%s] Request Headers End\n", logId)
 	apiKey, ok := os.LookupEnv("API_KEY")
 	w.Header().Set("X-Server", "custom-auth-server")
 	if !ok {
-		log.Println("[%s] API_KEY is not present. Setting to default : 828c3c5f-30ab-4291-8ad1-7cc33ba0be4f", logId)
+		log.Printf("[%s] API_KEY is not present. Setting to default : 828c3c5f-30ab-4291-8ad1-7cc33ba0be4f\n", logId)
 		apiKey = "828c3c5f-30ab-4291-8ad1-7cc33ba0be4f"
 	} else {
 		log.Printf("[%s] API_KEY: %s\n", logId, apiKey)
@@ -192,7 +192,7 @@ func main() {
 
 	http.HandleFunc("/delay/", delay)
 
-	log.Println("Version 1.15")
+	log.Println("Version 1.16")
 
 	errs := Run(httpPort, httpsPort, map[string]string{
 		"cert": "server.crt",
