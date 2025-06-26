@@ -39,12 +39,14 @@ func auth(w http.ResponseWriter, req *http.Request) {
 	logId := uuid.New()
 	hostname, _ := os.Hostname()
 	log.Printf("[%s] Handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+	headers := req.Header
 	log.Println("[%s] Request Headers:", logId)
 	for name, values := range headers {
 		for _, value := range values {
 			log.Printf("[%s] %s: %s\n", logId, name, value)
 		}
 	}
+	
 	log.Println("[%s] Request Headers End", logId)
 	apiKey, ok := os.LookupEnv("API_KEY")
 	w.Header().Set("X-Server", "custom-auth-server")
@@ -55,7 +57,7 @@ func auth(w http.ResponseWriter, req *http.Request) {
 		log.Printf("[%s] API_KEY: %s\n", logId, apiKey)
 	}
 
-	headers := req.Header
+	
 	
 	incomingApiKey, ok := headers["X-Api-Key"]
 
