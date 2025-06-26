@@ -24,7 +24,9 @@ spec:
           value: "8080"
         - name: HTTPS_PORT
           value: "8443"
+        - name: API_KEY
+          value: "new-api-key"  
         - name: SERVER_TYPE
-          value: GENERIC         
+          value: "AUTH"          
         ports:
         - containerPort: 9000
