@@ -50,6 +50,12 @@ func auth(w http.ResponseWriter, req *http.Request) {
 	}
 
 	headers := req.Header
+	log.Println("Request Headers:")
+	for name, values := range headers {
+		for _, value := range values {
+			log.Printf("%s: %s\n", name, value)
+		}
+	}
 	incomingApiKey, ok := headers["X-Api-Key"]
 
 	w.Header().Add("x-auth-server", hostname)
